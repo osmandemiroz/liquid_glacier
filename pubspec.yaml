@@ -1,0 +1,25 @@
+name: liquid_glacier
+version: 0.0.1
+homepage: https://github.com/osmandemiroz/liquid_glacier
+environment:
+  sdk: ">=3.6.1 <4.0.0"
+  flutter: ">=3.0.0"
+description: |
+  Apple Liquid Glass design for Flutter Material widgets. Features translucent surfaces, dynamic blur effects, subtle reflections, and depth-based layering.
+dependencies:
+  flutter:
+    sdk: flutter
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  pubspec_dependency_sorter: ^1.0.5
+  very_good_analysis: ^7.0.0
+repository: https://github.com/osmandemiroz/liquid_glacier
+issue_tracker: https://github.com/osmandemiroz/liquid_glacier/issues
+topics:
+  - ui
+  - glassmorphism
+  - design
+  - material
+  - apple
+flutter: null
