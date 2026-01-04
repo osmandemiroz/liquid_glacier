@@ -88,6 +88,8 @@ class LiquidGlassContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = LiquidGlassTheme.of(context);
+    final brightness = Theme.of(context).brightness;
+    final isDark = brightness == Brightness.dark;
 
     final effectiveBlurSigma = blurSigma ?? theme.blurSigma;
     final effectiveOpacity = opacity ?? theme.opacity;
@@ -101,6 +103,25 @@ class LiquidGlassContainer extends StatelessWidget {
     final effectiveBorderColor = borderColor ?? theme.effectiveBorderColor;
     final effectiveShadows = shadows ?? theme.effectiveShadows;
 
+    // iOS 26 Liquid Glass: Calculate adaptive colors
+    final glassBaseColor = isDark
+        ? effectiveTintColor.withValues(alpha: effectiveOpacity * 0.8)
+        : effectiveTintColor.withValues(alpha: effectiveOpacity * 1.2);
+
+    // Specular highlight color (bright edge at top)
+    final specularColor = effectiveReflectionColor.withValues(alpha: 0.4);
+    final specularFadeColor = effectiveReflectionColor.withValues(alpha: 0);
+
+    // Inner glow colors for depth
+    final innerGlowColor = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : Colors.white.withValues(alpha: 0.15);
+
+    // Rim light color (luminous border effect)
+    final rimLightColor = isDark
+        ? Colors.white.withValues(alpha: 0.25)
+        : Colors.white.withValues(alpha: 0.4);
+
     Widget container = ClipRRect(
       borderRadius: effectiveBorderRadius,
       clipBehavior: clipBehavior,
@@ -109,31 +130,27 @@ class LiquidGlassContainer extends StatelessWidget {
           sigmaX: effectiveBlurSigma,
           sigmaY: effectiveBlurSigma,
         ),
-        child: Container(
-          width: width,
-          height: height,
-          constraints: constraints,
-          padding: padding,
-          alignment: alignment,
-          decoration: BoxDecoration(
-            color: effectiveTintColor.withValues(alpha: effectiveOpacity),
+        child: CustomPaint(
+          painter: _LiquidGlassPainter(
             borderRadius: effectiveBorderRadius,
-            border: Border.all(
-              color: effectiveBorderColor,
-              width: effectiveBorderWidth,
-            ),
-            gradient: effectiveEnableReflection
-                ? LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      effectiveReflectionColor.withValues(alpha: 0.2),
-                      effectiveReflectionColor.withValues(alpha: 0.05),
-                    ],
-                  )
-                : null,
+            glassColor: glassBaseColor,
+            specularColor: specularColor,
+            specularFadeColor: specularFadeColor,
+            innerGlowColor: innerGlowColor,
+            rimLightColor: rimLightColor,
+            borderColor: effectiveBorderColor,
+            borderWidth: effectiveBorderWidth,
+            enableReflection: effectiveEnableReflection,
+            isDark: isDark,
           ),
-          child: child,
+          child: Container(
+            width: width,
+            height: height,
+            constraints: constraints,
+            padding: padding,
+            alignment: alignment,
+            child: child,
+          ),
         ),
       ),
     );
@@ -144,7 +161,19 @@ class LiquidGlassContainer extends StatelessWidget {
         margin: margin,
         decoration: BoxDecoration(
           borderRadius: effectiveBorderRadius,
-          boxShadow: effectiveShadows,
+          boxShadow: [
+            // Primary soft shadow
+            ...effectiveShadows,
+            // Additional glow shadow for iOS 26 effect
+            BoxShadow(
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.4)
+                  : Colors.black.withValues(alpha: 0.15),
+              blurRadius: 20,
+              spreadRadius: -5,
+              offset: const Offset(0, 10),
+            ),
+          ],
         ),
         child: container,
       );
@@ -156,6 +185,215 @@ class LiquidGlassContainer extends StatelessWidget {
     }
 
     return container;
+  }
+}
+
+/// Custom painter that renders iOS 26 Liquid Glass effects.
+///
+/// Paints layered glass effects including:
+/// - Subtle transparent base
+/// - Curved liquid/smoke swirl flowing across the surface
+/// - Very thin luminous white border
+/// - Organic flowing highlight texture
+class _LiquidGlassPainter extends CustomPainter {
+  _LiquidGlassPainter({
+    required this.borderRadius,
+    required this.glassColor,
+    required this.specularColor,
+    required this.specularFadeColor,
+    required this.innerGlowColor,
+    required this.rimLightColor,
+    required this.borderColor,
+    required this.borderWidth,
+    required this.enableReflection,
+    required this.isDark,
+  });
+
+  final BorderRadius borderRadius;
+  final Color glassColor;
+  final Color specularColor;
+  final Color specularFadeColor;
+  final Color innerGlowColor;
+  final Color rimLightColor;
+  final Color borderColor;
+  final double borderWidth;
+  final bool enableReflection;
+  final bool isDark;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final rrect = borderRadius.toRRect(rect);
+
+    // Layer 1: Very subtle transparent base (almost invisible)
+    final basePaint = Paint()
+      ..color = glassColor.withValues(alpha: glassColor.a * 0.3)
+      ..style = PaintingStyle.fill;
+    canvas.drawRRect(rrect, basePaint);
+
+    // Layer 2: Liquid flow / smoke swirl effect (iOS 26 signature)
+    if (enableReflection) {
+      canvas
+        ..save()
+        ..clipRRect(rrect);
+
+      // Create curved liquid swirl using bezier path
+      final liquidPath = Path()
+
+        // First swirl curve - flowing from bottom-left to top-right
+        ..moveTo(-size.width * 0.2, size.height * 0.8)
+        ..cubicTo(
+          size.width * 0.1,
+          size.height * 0.6,
+          size.width * 0.3,
+          size.height * 0.3,
+          size.width * 0.5,
+          size.height * 0.2,
+        )
+        ..cubicTo(
+          size.width * 0.7,
+          size.height * 0.1,
+          size.width * 0.9,
+          size.height * 0.15,
+          size.width * 1.2,
+          size.height * 0.0,
+        )
+        // Extend the path width for the swirl effect
+        ..lineTo(size.width * 1.3, size.height * 0.25)
+        ..cubicTo(
+          size.width * 1.0,
+          size.height * 0.35,
+          size.width * 0.75,
+          size.height * 0.3,
+          size.width * 0.55,
+          size.height * 0.4,
+        )
+        ..cubicTo(
+          size.width * 0.35,
+          size.height * 0.5,
+          size.width * 0.15,
+          size.height * 0.75,
+          -size.width * 0.1,
+          size.height * 0.95,
+        )
+        ..close();
+
+      // Liquid swirl gradient - subtle smoky white
+      final liquidGradient = LinearGradient(
+        begin: const Alignment(-0.5, 1),
+        end: const Alignment(1, -0.5),
+        colors: [
+          Colors.white.withValues(alpha: 0),
+          Colors.white.withValues(alpha: isDark ? 0.08 : 0.12),
+          Colors.white.withValues(alpha: isDark ? 0.15 : 0.20),
+          Colors.white.withValues(alpha: isDark ? 0.08 : 0.12),
+          Colors.white.withValues(alpha: 0),
+        ],
+        stops: const [0.0, 0.25, 0.5, 0.75, 1.0],
+      );
+
+      final liquidPaint = Paint()
+        ..shader = liquidGradient.createShader(rect)
+        ..style = PaintingStyle.fill
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 15);
+
+      canvas.drawPath(liquidPath, liquidPaint);
+
+      // Second subtle swirl - adds organic depth
+      final secondSwirl = Path()
+        ..moveTo(size.width * 0.6, size.height * 1.1)
+        ..cubicTo(
+          size.width * 0.7,
+          size.height * 0.7,
+          size.width * 0.85,
+          size.height * 0.5,
+          size.width * 1.1,
+          size.height * 0.4,
+        )
+        ..lineTo(size.width * 1.2, size.height * 0.55)
+        ..cubicTo(
+          size.width * 0.95,
+          size.height * 0.65,
+          size.width * 0.8,
+          size.height * 0.85,
+          size.width * 0.7,
+          size.height * 1.2,
+        )
+        ..close();
+
+      final secondGradient = LinearGradient(
+        begin: Alignment.bottomLeft,
+        end: Alignment.topRight,
+        colors: [
+          Colors.white.withValues(alpha: 0),
+          Colors.white.withValues(alpha: isDark ? 0.05 : 0.08),
+          Colors.white.withValues(alpha: 0),
+        ],
+      );
+
+      final secondPaint = Paint()
+        ..shader = secondGradient.createShader(rect)
+        ..style = PaintingStyle.fill
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 20);
+
+      canvas
+        ..drawPath(secondSwirl, secondPaint)
+        ..restore();
+    }
+
+    // Layer 3: Very thin luminous white border (iOS 26 signature)
+    final rimPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.75;
+
+    // Gradient rim for luminous effect - brighter at top-left
+    final rimGradient = LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [
+        Colors.white.withValues(alpha: isDark ? 0.5 : 0.6),
+        Colors.white.withValues(alpha: isDark ? 0.15 : 0.2),
+        Colors.white.withValues(alpha: isDark ? 0.1 : 0.15),
+        Colors.white.withValues(alpha: isDark ? 0.25 : 0.35),
+      ],
+      stops: const [0.0, 0.3, 0.7, 1.0],
+    );
+    rimPaint.shader = rimGradient.createShader(rect);
+
+    canvas.drawRRect(rrect, rimPaint);
+
+    // Layer 4: Inner subtle glow along edges
+    final innerGlowPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3
+      ..maskFilter = const MaskFilter.blur(BlurStyle.inner, 3);
+
+    final innerGlowGradient = LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [
+        Colors.white.withValues(alpha: isDark ? 0.1 : 0.15),
+        Colors.white.withValues(alpha: 0),
+      ],
+    );
+    innerGlowPaint.shader = innerGlowGradient.createShader(rect);
+
+    final innerRRect = rrect.deflate(1.5);
+    canvas.drawRRect(innerRRect, innerGlowPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _LiquidGlassPainter oldDelegate) {
+    return borderRadius != oldDelegate.borderRadius ||
+        glassColor != oldDelegate.glassColor ||
+        specularColor != oldDelegate.specularColor ||
+        specularFadeColor != oldDelegate.specularFadeColor ||
+        innerGlowColor != oldDelegate.innerGlowColor ||
+        rimLightColor != oldDelegate.rimLightColor ||
+        borderColor != oldDelegate.borderColor ||
+        borderWidth != oldDelegate.borderWidth ||
+        enableReflection != oldDelegate.enableReflection ||
+        isDark != oldDelegate.isDark;
   }
 }
 

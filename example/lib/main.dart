@@ -46,8 +46,9 @@ class _LiquidGlassDemoState extends State<LiquidGlassDemo> {
   Widget build(BuildContext context) {
     return LiquidGlassTheme(
       data: const LiquidGlassThemeData(
-        blurSigma: 15,
-        opacity: 0.2,
+        blurSigma: 25,
+        opacity: 0.12,
+        borderWidth: 1,
       ),
       child: Scaffold(
         extendBodyBehindAppBar: true,
@@ -73,7 +74,7 @@ class _LiquidGlassDemoState extends State<LiquidGlassDemo> {
                   const SizedBox(height: 20),
                   // Title
                   const Text(
-                    '✨ Liquid Glass',
+                    'Liquid Glacier',
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,

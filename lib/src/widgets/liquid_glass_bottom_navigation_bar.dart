@@ -109,142 +109,228 @@ class _LiquidGlassBottomNavigationBarState
   Widget build(BuildContext context) {
     final theme = LiquidGlassTheme.of(context);
     final brightness = Theme.of(context).brightness;
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final isDark = brightness == Brightness.dark;
 
     final effectiveBlurSigma = widget.blurSigma ?? theme.blurSigma;
-    final effectiveOpacity = widget.glassOpacity ?? theme.opacity * 0.8;
-    final effectiveBackgroundColor = widget.backgroundColor ??
-        (brightness == Brightness.light
-            ? Colors.white
-            : Colors.black.withValues(alpha: 0.5));
-    final effectiveBorderColor =
-        widget.borderColor ?? theme.effectiveBorderColor;
 
-    return ClipRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(
-          sigmaX: effectiveBlurSigma,
-          sigmaY: effectiveBlurSigma,
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            color: effectiveBackgroundColor.withValues(alpha: effectiveOpacity),
-            border: widget.showTopBorder
-                ? Border(
-                    top: BorderSide(
-                      color: effectiveBorderColor,
-                      width: 0.5,
-                    ),
-                  )
-                : null,
-          ),
-          child: SafeArea(
-            top: false,
-            child: widget.enablePillIndicator
-                ? _buildPillNavigationBar(context)
-                : _buildStandardNavigationBar(context, bottomPadding),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStandardNavigationBar(
-    BuildContext context,
-    double bottomPadding,
-  ) {
-    return BottomNavigationBar(
-      items: widget.items,
-      onTap: widget.onTap,
-      currentIndex: widget.currentIndex,
-      elevation: 0,
-      type: widget.type ?? BottomNavigationBarType.fixed,
-      backgroundColor: Colors.transparent,
-      iconSize: widget.iconSize,
-      selectedItemColor: widget.selectedItemColor,
-      unselectedItemColor: widget.unselectedItemColor,
-      selectedIconTheme: widget.selectedIconTheme,
-      unselectedIconTheme: widget.unselectedIconTheme,
-      selectedFontSize: widget.selectedFontSize,
-      unselectedFontSize: widget.unselectedFontSize,
-      selectedLabelStyle: widget.selectedLabelStyle,
-      unselectedLabelStyle: widget.unselectedLabelStyle,
-      showSelectedLabels: widget.showSelectedLabels ?? true,
-      showUnselectedLabels: widget.showUnselectedLabels ?? true,
-      mouseCursor: widget.mouseCursor,
-      enableFeedback: widget.enableFeedback,
-      landscapeLayout: widget.landscapeLayout,
-      useLegacyColorScheme: widget.useLegacyColorScheme,
-    );
-  }
-
-  Widget _buildPillNavigationBar(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final effectivePillColor = widget.pillColor ?? colorScheme.primaryContainer;
-    final selectedColor = widget.selectedItemColor ?? colorScheme.primary;
-    final unselectedColor =
-        widget.unselectedItemColor ?? colorScheme.onSurfaceVariant;
-
-    return SizedBox(
-      height: 56,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: List.generate(widget.items.length, (index) {
-          final item = widget.items[index];
-          final isSelected = index == widget.currentIndex;
-
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => widget.onTap?.call(index),
-              behavior: HitTestBehavior.opaque,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeInOut,
-                margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? effectivePillColor.withValues(alpha: 0.3)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconTheme(
-                      data: IconThemeData(
-                        size: widget.iconSize,
-                        color: isSelected ? selectedColor : unselectedColor,
-                      ),
-                      child: isSelected ? (item.activeIcon) : item.icon,
-                    ),
-                    if ((widget.showSelectedLabels ?? true) ||
-                        (widget.showUnselectedLabels ?? true))
-                      const SizedBox(height: 2),
-                    if ((isSelected && (widget.showSelectedLabels ?? true)) ||
-                        (!isSelected && (widget.showUnselectedLabels ?? true)))
-                      Text(
-                        item.label ?? '',
-                        style: TextStyle(
-                          fontSize: isSelected
-                              ? widget.selectedFontSize
-                              : widget.unselectedFontSize,
-                          color: isSelected ? selectedColor : unselectedColor,
-                          fontWeight:
-                              isSelected ? FontWeight.w600 : FontWeight.normal,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                  ],
+    // iOS 26 floating pill nav bar
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(50),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(
+              sigmaX: effectiveBlurSigma,
+              sigmaY: effectiveBlurSigma,
+            ),
+            child: CustomPaint(
+              painter: _LiquidGlassNavBarPainter(isDark: isDark),
+              child: Container(
+                height: 70,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: List.generate(widget.items.length, (index) {
+                    return _buildNavItem(context, index, isDark);
+                  }),
                 ),
               ),
             ),
-          );
-        }),
+          ),
+        ),
       ),
     );
+  }
+
+  Widget _buildNavItem(BuildContext context, int index, bool isDark) {
+    final item = widget.items[index];
+    final isSelected = index == widget.currentIndex;
+
+    final selectedColor =
+        widget.selectedItemColor ?? (isDark ? Colors.white : Colors.black);
+    final unselectedColor = widget.unselectedItemColor ??
+        (isDark
+            ? Colors.white.withValues(alpha: 0.6)
+            : Colors.black.withValues(alpha: 0.6));
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => widget.onTap?.call(index),
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          decoration: BoxDecoration(
+            // Selected item gets darker pill background (iOS 26 style)
+            color: isSelected
+                ? (isDark
+                    ? Colors.white.withValues(alpha: 0.2)
+                    : Colors.black.withValues(alpha: 0.1))
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(25),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconTheme(
+                data: IconThemeData(
+                  size: widget.iconSize,
+                  color: isSelected ? selectedColor : unselectedColor,
+                ),
+                child: isSelected ? item.activeIcon : item.icon,
+              ),
+              if ((widget.showSelectedLabels ?? true) ||
+                  (widget.showUnselectedLabels ?? true)) ...[
+                const SizedBox(height: 2),
+                if ((isSelected && (widget.showSelectedLabels ?? true)) ||
+                    (!isSelected && (widget.showUnselectedLabels ?? true)))
+                  Text(
+                    item.label ?? '',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: isSelected ? selectedColor : unselectedColor,
+                      fontWeight:
+                          isSelected ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Custom painter for iOS 26 Liquid Glass navigation bar.
+///
+/// Renders the floating pill with:
+/// - Subtle transparent base
+/// - Liquid swirl texture
+/// - Thin luminous white border
+class _LiquidGlassNavBarPainter extends CustomPainter {
+  _LiquidGlassNavBarPainter({required this.isDark});
+
+  final bool isDark;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(50));
+
+    // Layer 1: Very subtle base fill
+    // iOS 26 reference shows a milky/glassy look, not fully transparent dark
+    final basePaint = Paint()
+      ..color = isDark
+          ? Colors.white
+              .withValues(alpha: 0.03) // Highly transparent for "real glass"
+          : Colors.white.withValues(alpha: 0.3)
+      ..style = PaintingStyle.fill;
+    canvas
+      ..drawRRect(rrect, basePaint)
+
+      // Layer 2: Liquid swirl effect
+      ..save()
+      ..clipRRect(rrect);
+
+    // Create curved liquid swirl path
+    final liquidPath = Path()
+      ..moveTo(-size.width * 0.1, size.height * 0.7)
+      ..cubicTo(
+        size.width * 0.15,
+        size.height * 0.3,
+        size.width * 0.35,
+        size.height * 0.1,
+        size.width * 0.55,
+        size.height * 0.2,
+      )
+      ..cubicTo(
+        size.width * 0.75,
+        size.height * 0.3,
+        size.width * 0.9,
+        size.height * 0.5,
+        size.width * 1.1,
+        size.height * 0.3,
+      )
+      ..lineTo(size.width * 1.15, size.height * 0.6)
+      ..cubicTo(
+        size.width * 0.95,
+        size.height * 0.8,
+        size.width * 0.7,
+        size.height * 0.6,
+        size.width * 0.5,
+        size.height * 0.7,
+      )
+      ..cubicTo(
+        size.width * 0.3,
+        size.height * 0.8,
+        size.width * 0.1,
+        size.height * 0.9,
+        -size.width * 0.05,
+        size.height * 0.85,
+      )
+      ..close();
+
+    final liquidGradient = LinearGradient(
+      colors: [
+        Colors.white.withValues(alpha: 0),
+        Colors.white.withValues(alpha: isDark ? 0.12 : 0.25),
+        Colors.white.withValues(alpha: isDark ? 0.08 : 0.15),
+        Colors.white.withValues(alpha: 0),
+      ],
+      stops: const [0.0, 0.35, 0.65, 1.0],
+    );
+
+    final liquidPaint = Paint()
+      ..shader = liquidGradient.createShader(rect)
+      ..style = PaintingStyle.fill
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 15);
+
+    canvas
+      ..drawPath(liquidPath, liquidPaint)
+      ..restore();
+
+    // Layer 3: Thin luminous white border
+    final borderPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0; // Thinner border for cleaner look
+
+    final borderGradient = LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [
+        Colors.white.withValues(alpha: isDark ? 0.85 : 0.95),
+        Colors.white.withValues(alpha: isDark ? 0.3 : 0.4),
+        Colors.white.withValues(alpha: isDark ? 0.2 : 0.3),
+        Colors.white.withValues(alpha: isDark ? 0.7 : 0.8),
+      ],
+      stops: const [0.0, 0.3, 0.7, 1.0],
+    );
+    borderPaint.shader = borderGradient.createShader(rect);
+
+    canvas.drawRRect(rrect, borderPaint);
+
+    // Layer 4: Inner Glow (Inset) to simulate thickness
+    final innerGlowPaint = Paint()
+      ..color = Colors.white.withValues(alpha: isDark ? 0.15 : 0.3)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+
+    final innerRect = rrect.deflate(1);
+    canvas.drawRRect(innerRect, innerGlowPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _LiquidGlassNavBarPainter oldDelegate) {
+    return isDark != oldDelegate.isDark;
   }
 }
 
