@@ -225,13 +225,10 @@ class _LiquidGlassNavBarPainter extends CustomPainter {
     final rect = Offset.zero & size;
     final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(50));
 
-    // Layer 1: Very subtle base fill
-    // iOS 26 reference shows a milky/glassy look, not fully transparent dark
+    // Layer 1: Base fill
+    // Fully transparent as requested
     final basePaint = Paint()
-      ..color = isDark
-          ? Colors.white
-              .withValues(alpha: 0.03) // Highly transparent for "real glass"
-          : Colors.white.withValues(alpha: 0.3)
+      ..color = Colors.transparent
       ..style = PaintingStyle.fill;
     canvas
       ..drawRRect(rrect, basePaint)
@@ -281,8 +278,10 @@ class _LiquidGlassNavBarPainter extends CustomPainter {
     final liquidGradient = LinearGradient(
       colors: [
         Colors.white.withValues(alpha: 0),
-        Colors.white.withValues(alpha: isDark ? 0.12 : 0.25),
-        Colors.white.withValues(alpha: isDark ? 0.08 : 0.15),
+        Colors.white
+            .withValues(alpha: isDark ? 0.01 : 0.02), // Essentially invisible
+        Colors.white
+            .withValues(alpha: isDark ? 0.005 : 0.01), // Essentially invisible
         Colors.white.withValues(alpha: 0),
       ],
       stops: const [0.0, 0.35, 0.65, 1.0],
@@ -300,7 +299,7 @@ class _LiquidGlassNavBarPainter extends CustomPainter {
     // Layer 3: Thin luminous white border
     final borderPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0; // Thinner border for cleaner look
+      ..strokeWidth = 1.0;
 
     final borderGradient = LinearGradient(
       begin: Alignment.topLeft,
@@ -317,9 +316,10 @@ class _LiquidGlassNavBarPainter extends CustomPainter {
 
     canvas.drawRRect(rrect, borderPaint);
 
-    // Layer 4: Inner Glow (Inset) to simulate thickness
+    // Layer 4: Inner Glow (Inset)
     final innerGlowPaint = Paint()
-      ..color = Colors.white.withValues(alpha: isDark ? 0.15 : 0.3)
+      ..color = Colors.white
+          .withValues(alpha: isDark ? 0.02 : 0.04) // Drastically reduced
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);

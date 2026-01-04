@@ -51,6 +51,8 @@ class _LiquidGlassDemoState extends State<LiquidGlassDemo> {
         borderWidth: 1,
       ),
       child: Scaffold(
+        extendBody: true,
+        backgroundColor: Colors.transparent,
         extendBodyBehindAppBar: true,
         body: Container(
           decoration: const BoxDecoration(
