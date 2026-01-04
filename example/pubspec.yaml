@@ -1,0 +1,20 @@
+name: liquid_glacier_example
+description: Example app showcasing Liquid Glass widgets
+
+publish_to: 'none'
+
+environment:
+  sdk: ">=3.6.1 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  liquid_glacier:
+    path: ../
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
