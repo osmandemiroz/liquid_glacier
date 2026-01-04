@@ -17,6 +17,16 @@ A Flutter package that applies Apple's **Liquid Glass** design language to Mater
 - 🎭 **Smooth Animations** - Hover, press, and focus state animations
 - 🌓 **Light/Dark Mode** - Auto-adapts to theme brightness
 
+## 📸 Screenshots
+
+<p align="center">
+  <img src="example/assets/screenshots/screenshot1.png" width="19%" alt="Screenshot 1" />
+  <img src="example/assets/screenshots/screenshot2.png" width="19%" alt="Screenshot 2" />
+  <img src="example/assets/screenshots/screenshot3.png" width="19%" alt="Screenshot 3" />
+  <img src="example/assets/screenshots/screenshot4.png" width="19%" alt="Screenshot 4" />
+  <img src="example/assets/screenshots/screenshot5.png" width="19%" alt="Screenshot 5" />
+</p>
+
 ## 📦 Installation
 
 ```yaml
@@ -58,8 +68,9 @@ void main() {
 | `LiquidGlassTextButton` | Text button variant |
 | `LiquidGlassOutlinedButton` | Outlined button variant |
 | `LiquidGlassIconButton` | Icon button with glass effect |
+| `LiquidGlassRadioButton` | Radio button with glass selection |
 | `LiquidGlassTextField` | Input field with focus glow |
-| `LiquidGlassBottomNavigationBar` | Bottom nav with pill indicator |
+| `LiquidGlassBottomNavigationBar` | Bottom nav with floating pill indicator |
 | `LiquidGlassNavigationBar` | Material 3 navigation bar |
 | `LiquidGlassDialog` | Dialog with frosted background |
 | `LiquidGlassAlertDialog` | Alert dialog variant |
@@ -100,6 +111,18 @@ LiquidGlassCard(
     padding: EdgeInsets.all(20),
     child: Text('Glass Card'),
   ),
+)
+```
+
+### Glass Radio Button
+
+```dart
+LiquidGlassRadioButton<int>(
+  value: 1,
+  groupValue: selectedValue,
+  onChanged: (val) => setState(() => selectedValue = val),
+  glassColor: Colors.blue,
+  label: Text('Option 1'),
 )
 ```
 

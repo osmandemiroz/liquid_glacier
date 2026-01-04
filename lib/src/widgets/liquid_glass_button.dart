@@ -153,7 +153,12 @@ class _LiquidGlassButtonState extends State<LiquidGlassButton>
     final colorScheme = Theme.of(context).colorScheme;
 
     final effectiveBlurSigma = widget.blurSigma ?? theme.blurSigma;
-    final effectiveOpacity = widget.glassOpacity ?? theme.opacity * 1.2;
+    final baseOpacity = widget.glassOpacity ?? theme.opacity;
+    // Match LiquidGlassContainer logic: 0.8 for dark, 1.2 for light
+    final effectiveOpacity = Theme.of(context).brightness == Brightness.dark
+        ? baseOpacity * 0.8
+        : baseOpacity * 1.2;
+
     final effectiveBorderRadius =
         widget.borderRadius ?? const BorderRadius.all(Radius.circular(12));
     final effectiveTintColor = widget.tintColor ?? theme.tintColor;

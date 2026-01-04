@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:liquid_glacier/src/core/liquid_glass_container.dart';
 import 'package:liquid_glacier/src/theme/liquid_glass_theme.dart';
 
 /// A Liquid Glass styled BottomNavigationBar.
@@ -125,49 +126,44 @@ class _LiquidGlassBottomNavigationBarState
       top: false,
       child: Padding(
         padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
-        child: ClipRRect(
+        child: LiquidGlassContainer(
           borderRadius: BorderRadius.circular(50),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(
-              sigmaX: effectiveBlurSigma,
-              sigmaY: effectiveBlurSigma,
-            ),
-            child: CustomPaint(
-              painter: _LiquidGlassNavBarPainter(isDark: isDark),
-              child: Container(
-                height: 70,
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                child: Stack(
-                  children: [
-                    // Sliding Pill Indicator
-                    AnimatedAlign(
-                      alignment: Alignment(alignmentValue, 0),
-                      duration: const Duration(milliseconds: 800),
-                      curve: Curves.elasticOut,
-                      child: FractionallySizedBox(
-                        widthFactor: 1 / widget.items.length,
-                        heightFactor: 1,
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? Colors.white.withValues(alpha: 0.2)
-                                : Colors.black.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(25),
-                          ),
-                        ),
+          blurSigma: effectiveBlurSigma,
+          // LiquidGlassContainer handles opacity and tint automatically based on theme
+          // but we can pass overrides if needed to match the old logic exactly,
+          // however the goal is standardization, so purely using the container is best.
+          child: Container(
+            height: 70,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            child: Stack(
+              children: [
+                // Sliding Pill Indicator
+                AnimatedAlign(
+                  alignment: Alignment(alignmentValue, 0),
+                  duration: const Duration(milliseconds: 800),
+                  curve: Curves.elasticOut,
+                  child: FractionallySizedBox(
+                    widthFactor: 1 / widget.items.length,
+                    heightFactor: 1,
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.2)
+                            : Colors.black.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(25),
                       ),
                     ),
-                    // Navigation Items
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: List.generate(widget.items.length, (index) {
-                        return _buildNavItem(context, index, isDark);
-                      }),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+                // Navigation Items
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: List.generate(widget.items.length, (index) {
+                    return _buildNavItem(context, index, isDark);
+                  }),
+                ),
+              ],
             ),
           ),
         ),
@@ -231,131 +227,6 @@ class _LiquidGlassBottomNavigationBarState
         ),
       ),
     );
-  }
-}
-
-/// Custom painter for iOS 26 Liquid Glass navigation bar.
-///
-/// Renders the floating pill with:
-/// - Subtle transparent base
-/// - Liquid swirl texture
-/// - Thin luminous white border
-class _LiquidGlassNavBarPainter extends CustomPainter {
-  _LiquidGlassNavBarPainter({required this.isDark});
-
-  final bool isDark;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Offset.zero & size;
-    final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(50));
-
-    // Layer 1: Base fill
-    // Fully transparent as requested
-    final basePaint = Paint()
-      ..color = Colors.transparent
-      ..style = PaintingStyle.fill;
-    canvas
-      ..drawRRect(rrect, basePaint)
-
-      // Layer 2: Liquid swirl effect
-      ..save()
-      ..clipRRect(rrect);
-
-    // Create curved liquid swirl path
-    final liquidPath = Path()
-      ..moveTo(-size.width * 0.1, size.height * 0.7)
-      ..cubicTo(
-        size.width * 0.15,
-        size.height * 0.3,
-        size.width * 0.35,
-        size.height * 0.1,
-        size.width * 0.55,
-        size.height * 0.2,
-      )
-      ..cubicTo(
-        size.width * 0.75,
-        size.height * 0.3,
-        size.width * 0.9,
-        size.height * 0.5,
-        size.width * 1.1,
-        size.height * 0.3,
-      )
-      ..lineTo(size.width * 1.15, size.height * 0.6)
-      ..cubicTo(
-        size.width * 0.95,
-        size.height * 0.8,
-        size.width * 0.7,
-        size.height * 0.6,
-        size.width * 0.5,
-        size.height * 0.7,
-      )
-      ..cubicTo(
-        size.width * 0.3,
-        size.height * 0.8,
-        size.width * 0.1,
-        size.height * 0.9,
-        -size.width * 0.05,
-        size.height * 0.85,
-      )
-      ..close();
-
-    final liquidGradient = LinearGradient(
-      colors: [
-        Colors.white.withValues(alpha: 0),
-        Colors.white
-            .withValues(alpha: isDark ? 0.01 : 0.02), // Essentially invisible
-        Colors.white
-            .withValues(alpha: isDark ? 0.005 : 0.01), // Essentially invisible
-        Colors.white.withValues(alpha: 0),
-      ],
-      stops: const [0.0, 0.35, 0.65, 1.0],
-    );
-
-    final liquidPaint = Paint()
-      ..shader = liquidGradient.createShader(rect)
-      ..style = PaintingStyle.fill
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 15);
-
-    canvas
-      ..drawPath(liquidPath, liquidPaint)
-      ..restore();
-
-    // Layer 3: Thin luminous white border
-    final borderPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
-
-    final borderGradient = LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: [
-        Colors.white.withValues(alpha: isDark ? 0.85 : 0.95),
-        Colors.white.withValues(alpha: isDark ? 0.3 : 0.4),
-        Colors.white.withValues(alpha: isDark ? 0.2 : 0.3),
-        Colors.white.withValues(alpha: isDark ? 0.7 : 0.8),
-      ],
-      stops: const [0.0, 0.3, 0.7, 1.0],
-    );
-    borderPaint.shader = borderGradient.createShader(rect);
-
-    canvas.drawRRect(rrect, borderPaint);
-
-    // Layer 4: Inner Glow (Inset)
-    final innerGlowPaint = Paint()
-      ..color = Colors.white
-          .withValues(alpha: isDark ? 0.02 : 0.04) // Drastically reduced
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
-
-    final innerRect = rrect.deflate(1);
-    canvas.drawRRect(innerRect, innerGlowPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _LiquidGlassNavBarPainter oldDelegate) {
-    return isDark != oldDelegate.isDark;
   }
 }
 
