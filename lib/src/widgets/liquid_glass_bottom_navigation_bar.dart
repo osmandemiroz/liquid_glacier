@@ -113,6 +113,13 @@ class _LiquidGlassBottomNavigationBarState
 
     final effectiveBlurSigma = widget.blurSigma ?? theme.blurSigma;
 
+    // Calculate alignment for the sliding pill
+    var alignmentValue = 0.0;
+    if (widget.items.length > 1) {
+      alignmentValue =
+          -1.0 + (widget.currentIndex * 2.0 / (widget.items.length - 1));
+    }
+
     // iOS 26 floating pill nav bar
     return SafeArea(
       top: false,
@@ -130,11 +137,35 @@ class _LiquidGlassBottomNavigationBarState
               child: Container(
                 height: 70,
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: List.generate(widget.items.length, (index) {
-                    return _buildNavItem(context, index, isDark);
-                  }),
+                child: Stack(
+                  children: [
+                    // Sliding Pill Indicator
+                    AnimatedAlign(
+                      alignment: Alignment(alignmentValue, 0),
+                      duration: const Duration(milliseconds: 800),
+                      curve: Curves.elasticOut,
+                      child: FractionallySizedBox(
+                        widthFactor: 1 / widget.items.length,
+                        heightFactor: 1,
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.2)
+                                : Colors.black.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Navigation Items
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: List.generate(widget.items.length, (index) {
+                        return _buildNavItem(context, index, isDark);
+                      }),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -159,18 +190,12 @@ class _LiquidGlassBottomNavigationBarState
       child: GestureDetector(
         onTap: () => widget.onTap?.call(index),
         behavior: HitTestBehavior.opaque,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeOutCubic,
+        child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 4),
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          // Background is now handled by the sliding pill in the parent Stack
           decoration: BoxDecoration(
-            // Selected item gets darker pill background (iOS 26 style)
-            color: isSelected
-                ? (isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.1))
-                : Colors.transparent,
+            color: Colors.transparent,
             borderRadius: BorderRadius.circular(25),
           ),
           child: Column(

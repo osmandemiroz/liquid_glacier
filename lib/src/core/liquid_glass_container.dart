@@ -225,9 +225,10 @@ class _LiquidGlassPainter extends CustomPainter {
     final rect = Offset.zero & size;
     final rrect = borderRadius.toRRect(rect);
 
-    // Layer 1: Very subtle transparent base (almost invisible)
+    // Layer 1: Base fill
+    // Fully transparent as requested for authentic "glass" look
     final basePaint = Paint()
-      ..color = glassColor.withValues(alpha: glassColor.a * 0.3)
+      ..color = Colors.transparent
       ..style = PaintingStyle.fill;
     canvas.drawRRect(rrect, basePaint);
 
@@ -279,14 +280,15 @@ class _LiquidGlassPainter extends CustomPainter {
         ..close();
 
       // Liquid swirl gradient - subtle smoky white
+      // Drastically reduced opacity to prevent "gray background" look
       final liquidGradient = LinearGradient(
         begin: const Alignment(-0.5, 1),
         end: const Alignment(1, -0.5),
         colors: [
           Colors.white.withValues(alpha: 0),
-          Colors.white.withValues(alpha: isDark ? 0.08 : 0.12),
-          Colors.white.withValues(alpha: isDark ? 0.15 : 0.20),
-          Colors.white.withValues(alpha: isDark ? 0.08 : 0.12),
+          Colors.white.withValues(alpha: isDark ? 0.01 : 0.02), // Reduced
+          Colors.white.withValues(alpha: isDark ? 0.015 : 0.03), // Reduced
+          Colors.white.withValues(alpha: isDark ? 0.01 : 0.02), // Reduced
           Colors.white.withValues(alpha: 0),
         ],
         stops: const [0.0, 0.25, 0.5, 0.75, 1.0],

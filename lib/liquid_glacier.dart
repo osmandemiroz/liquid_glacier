@@ -20,5 +20,6 @@ export 'src/widgets/liquid_glass_dialog.dart';
 export 'src/widgets/liquid_glass_drawer.dart';
 export 'src/widgets/liquid_glass_fab.dart';
 export 'src/widgets/liquid_glass_navigation_rail.dart';
+export 'src/widgets/liquid_glass_radio.dart';
 export 'src/widgets/liquid_glass_tab_bar.dart';
 export 'src/widgets/liquid_glass_text_field.dart';
