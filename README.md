@@ -15,6 +15,7 @@ A Flutter package that applies Apple's **Liquid Glass** design language to Mater
 - ✨ **Subtle Reflections** - Gradient overlays for glass-like highlights
 - 📐 **Depth & Layering** - Multi-layer shadows for visual depth
 - 🎭 **Smooth Animations** - Hover, press, and focus state animations
+- 🚀 **Custom Transitions** - Beautiful animated entrances with 10+ transition types
 - 🌓 **Light/Dark Mode** - Auto-adapts to theme brightness
 
 ## 📸 Screenshots
@@ -31,7 +32,7 @@ A Flutter package that applies Apple's **Liquid Glass** design language to Mater
 
 ```yaml
 dependencies:
-  liquid_glacier: ^0.0.1
+  liquid_glacier: ^0.0.2
 ```
 
 ## 🚀 Quick Start
@@ -81,6 +82,7 @@ void main() {
 | `LiquidGlassSegmentedTabBar` | Segmented control style |
 | `LiquidGlassFAB` | FAB with glow effect |
 | `LiquidGlassDrawer` | Drawer with blur |
+| `LiquidGlassSnackBar` | Snackbar with glass effect |
 | `LiquidGlassContainer` | Base glass container |
 
 ## 🎨 Theme Configuration
@@ -153,11 +155,13 @@ Scaffold(
 )
 ```
 
-### Glass Dialog
+### Glass Dialog with Animated Transitions
 
 ```dart
+// Dialog with iOS-style scale transition (default)
 showLiquidGlassDialog(
   context: context,
+  transitionType: LiquidGlassTransitionType.scaleDown,
   builder: (context) => LiquidGlassAlertDialog(
     icon: Icon(Icons.check_circle),
     title: Text('Success'),
@@ -170,7 +174,123 @@ showLiquidGlassDialog(
     ],
   ),
 );
+
+// Dialog with bouncy elastic transition
+showLiquidGlassDialog(
+  context: context,
+  transitionType: LiquidGlassTransitionType.elastic,
+  transitionDuration: Duration(milliseconds: 500),
+  builder: (context) => LiquidGlassDialog(
+    title: Text('Bouncy!'),
+    content: Text('This dialog has a playful entrance.'),
+  ),
+);
+
+// Quick confirmation dialog
+final confirmed = await showLiquidGlassConfirmDialog(
+  context: context,
+  title: 'Delete Item',
+  message: 'Are you sure you want to delete this?',
+  isDestructive: true,
+);
 ```
+
+### Glass SnackBar with Animated Transitions
+
+```dart
+// SnackBar with slide-up animation (default)
+showLiquidGlassSnackBar(
+  context: context,
+  message: 'Operation completed!',
+  transitionType: LiquidGlassTransitionType.slideUp,
+);
+
+// Success snackbar with scale transition
+showLiquidGlassSnackBar(
+  context: context,
+  message: 'File saved successfully!',
+  type: LiquidGlassSnackBarType.success,
+  transitionType: LiquidGlassTransitionType.scale,
+  actionLabel: 'View',
+  onActionPressed: () => openFile(),
+);
+
+// Top-positioned snackbar
+showLiquidGlassSnackBar(
+  context: context,
+  message: 'New notification received!',
+  type: LiquidGlassSnackBarType.info,
+  position: LiquidGlassSnackBarPosition.top,
+  transitionType: LiquidGlassTransitionType.slideDown,
+);
+
+// Error snackbar with elastic bounce
+showLiquidGlassSnackBar(
+  context: context,
+  message: 'Something went wrong!',
+  type: LiquidGlassSnackBarType.error,
+  transitionType: LiquidGlassTransitionType.elastic,
+  showCloseIcon: true,
+);
+```
+
+## 🎬 Animated Transitions
+
+Beautiful, Apple-inspired transitions for dialogs and snackbars.
+
+### Transition Types
+
+| Type | Description | Best For |
+|------|-------------|----------|
+| `fade` | Simple opacity animation | Subtle appearances |
+| `scale` | Grows from center with fade | Modal dialogs |
+| `scaleDown` | Scales from larger size (iOS style) | Default for dialogs |
+| `slideUp` | Slides from bottom | Snackbars, sheets |
+| `slideDown` | Slides from top | Notifications |
+| `slideLeft` | Slides from right | Side panels |
+| `slideRight` | Slides from left | Side panels |
+| `zoom` | Zoom with subtle bounce | Playful UIs |
+| `elastic` | Spring animation with overshoot | Fun, bouncy feel |
+| `blur` | Fade with scale emphasizing glass | Glass effects |
+| `none` | Instant appearance | No animation needed |
+
+### Transition Presets
+
+```dart
+// Use preset configurations
+showLiquidGlassDialogWithConfig(
+  context: context,
+  config: LiquidGlassTransitionConfig.iOS,      // iOS-style (default)
+  // config: LiquidGlassTransitionConfig.bouncy, // Elastic bounce
+  // config: LiquidGlassTransitionConfig.fast,   // Quick 200ms
+  // config: LiquidGlassTransitionConfig.slow,   // Elegant 450ms
+  builder: (context) => MyDialog(),
+);
+
+// Custom configuration
+final customConfig = LiquidGlassTransitionConfig(
+  type: LiquidGlassTransitionType.scale,
+  duration: Duration(milliseconds: 400),
+  curve: Curves.easeOutBack,
+);
+```
+
+#### SnackBar Types
+
+| Type | Description | Accent Color |
+|------|-------------|--------------|
+| `neutral` | Default/custom messages | Theme color |
+| `info` | Informational messages | Blue |
+| `success` | Success confirmations | Green |
+| `warning` | Warning alerts | Orange |
+| `error` | Error notifications | Red |
+
+#### SnackBar Positions
+
+| Position | Description |
+|----------|-------------|
+| `bottom` | Bottom of screen (default) |
+| `top` | Top of screen |
 
 ## 🎯 Best Practices
 

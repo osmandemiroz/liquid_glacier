@@ -1,5 +1,5 @@
 name: liquid_glacier
-version: 0.0.1
+version: 0.0.2
 homepage: https://github.com/osmandemiroz/liquid_glacier
 environment:
   sdk: ">=3.6.1 <4.0.0"

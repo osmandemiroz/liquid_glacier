@@ -6,6 +6,7 @@ analyzer:
     comment_references: ignore
     avoid_slow_async_io: ignore
     use_build_context_synchronously: ignore
+    document_ignores: ignore
 include: package:very_good_analysis/analysis_options.yaml
 linter:
  
